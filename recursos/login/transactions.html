@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transacciones</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Transacciones</h2>
+        <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#transactionModal">Añadir transacción</button>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="transactions-list">
+                <!-- Transactions will be dynamically added here -->
+            </tbody>
+        </table>
+        <nav>
+            <ul class="pagination" id="pagination">
+                <!-- Pagination will be dynamically added here -->
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalLabel">Añadir</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="transaction-form">
+                        <div class="form-group">
+                            <label for="date">Fecha:</label>
+                            <input type="date" class="form-control" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">Monto:</label>
+                            <input type="number" class="form-control" id="amount" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Descripción:</label>
+                            <input type="text" class="form-control" id="description" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+            const itemsPerPage = 5;
+            let currentPage = 1;
+
+            function renderTransactions(page) {
+                const startIndex = (page - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedTransactions = transactions.slice(startIndex, endIndex);
+                const transactionsList = $('#transactions-list');
+                transactionsList.empty();
+
+                paginatedTransactions.forEach((transaction, index) => {
+                    transactionsList.append(`
+                        <tr>
+                            <td>${transaction.date}</td>
+                            <td>${transaction.amount}</td>
+                            <td>${transaction.description}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm edit-transaction" data-index="${startIndex + index}">Editar</button>
+                                <button class="btn btn-danger btn-sm delete-transaction" data-index="${startIndex + index}">Borrar</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                renderPagination(page);
+            }
+
+            function renderPagination(page) {
+                const pageCount = Math.ceil(transactions.length / itemsPerPage);
+                const pagination = $('#pagination');
+                pagination.empty();
+
+                for (let i = 1; i <= pageCount; i++) {
+                    pagination.append(`
+                        <li class="page-item ${i === page ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `);
+                }
+            }
+
+            function addTransaction(transaction) {
+                transactions.push(transaction);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                renderTransactions(currentPage);
+            }
+
+            function updateTransaction(index, updatedTransaction) {
+                transactions[index] = updatedTransaction;
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                renderTransactions(currentPage);
+            }
+
+            function deleteTransaction(index) {
+                transactions.splice(index, 1);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                renderTransactions(currentPage);
+            }
+
+            $('#transaction-form').on('submit', function(e) {
+                e.preventDefault();
+                const date = $('#date').val();
+                const amount = $('#amount').val();
+                const description = $('#description').val();
+
+                addTransaction({ date, amount, description });
+
+                $('#date').val('');
+                $('#amount').val('');
+                $('#description').val('');
+                $('#transactionModal').modal('hide');
+            });
+
+            $('#transactions-list').on('click', '.edit-transaction', function() {
+                const index = $(this).data('index');
+                const transaction = transactions[index];
+
+                $('#date').val(transaction.date);
+                $('#amount').val(transaction.amount);
+                $('#description').val(transaction.description);
+
+                $('#transactionModalLabel').text('Edit Transaction');
+                $('#transaction-form').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    const updatedTransaction = {
+                        date: $('#date').val(),
+                        amount: $('#amount').val(),
+                        description: $('#description').val()
+                    };
+
+                    updateTransaction(index, updatedTransaction);
+
+                    $('#date').val('');
+                    $('#amount').val('');
+                    $('#description').val('');
+                    $('#transactionModal').modal('hide');
+
+                    $('#transaction-form').off('submit').on('submit', function(e) {
+                        e.preventDefault();
+                        const date = $('#date').val();
+                        const amount = $('#amount').val();
+                        const description = $('#description').val();
+
+                        addTransaction({ date, amount, description });
+
+                        $('#date').val('');
+                        $('#amount').val('');
+                        $('#description').val('');
+                        $('#transactionModal').modal('hide');
+                    });
+
+                    $('#transactionModalLabel').text('Añadir transacción');
+                });
+
+                $('#transactionModal').modal('show');
+            });
+
+            $('#transactions-list').on('click', '.delete-transaction', function() {
+                const index = $(this).data('index');
+                deleteTransaction(index);
+            });
+
+            $('#pagination').on('click', '.page-link', function(e) {
+                e.preventDefault();
+                currentPage = $(this).data('page');
+                renderTransactions(currentPage);
+            });
+
+            renderTransactions(currentPage);
+        });
+    </script>
+</body>
+</html>

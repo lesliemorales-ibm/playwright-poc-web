@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Inicio de sesión</h2>
+        <div id="alert-container"></div>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Nombre de usuario:</label>
+                <input type="text" class="form-control" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const validUsername = 'user';
+            const validPassword = 'pass';
+
+            $('#login-form').on('submit', function(e) {
+                e.preventDefault();
+                const username = $('#username').val();
+                const password = $('#password').val();
+
+                if (username === validUsername && password === validPassword) {
+                    window.location.href = 'transactions.html';
+                } else {
+                    const alertContainer = $('#alert-container');
+                    alertContainer.html(`
+                        <div class="alert alert-danger" role="alert">
+							Nombre de usuario o contraseña inválidos
+                        </div>
+                    `);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
